@@ -1,0 +1,22 @@
+name: probe-upstream
+# Throwaway check: can a GitHub-hosted runner reach the Ontario Parks API?
+# Vercel's AWS egress gets 403, so this decides whether availability can be
+# refreshed automatically in CI or has to come from a residential IP.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the Ontario Parks API
+        run: |
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36'
+          echo "runner egress IP: $(curl -s --max-time 20 https://api.ipify.org || echo unknown)"
+          for path in "/api/bookingcategories" "/api/availability/map?mapId=-2147483326&bookingCategoryId=2&startDate=2026-09-02&endDate=2026-09-09&getDailyAvailability=true&isReserving=true&filterData=%5B%5D&peopleCapacityCategoryCounts=%5B%5D&numEquipment=0&boatLength=0&boatDraft=0&boatWidth=0&cartUid=&cartTransactionUid=&bookingUid=&groupHoldUid=&equipmentCategoryId=-32768&subEquipmentCategoryId=-32768&seed=probe"; do
+            code=$(curl -s -o /tmp/out -w '%{http_code}' --max-time 45 \
+              -A "$UA" -H 'Accept: application/json' \
+              -H 'Referer: https://reservations.ontarioparks.ca/' \
+              "https://reservations.ontarioparks.ca$path")
+            echo "HTTP $code  for  ${path:0:60}  ($(wc -c < /tmp/out) bytes)"
+          done
