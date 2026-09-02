@@ -1,0 +1,23 @@
+# Live availability snapshot: regenerate with `python op_roofed.py scan`.
+# Committing it would ship stale data that looks current.
+cache/availability.json
+
+# Raw park feed, ~560KB and rebuilt automatically by geocode.py.
+cache/parks_raw.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Vercel
+.vercel
+.env
+.env.*
+
+# Local noise
+server.log
+*.log
+.DS_Store
+Thumbs.db

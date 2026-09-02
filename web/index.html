@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ontario Parks · Roofed Accommodation Finder</title>
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header id="topbar">
+  <h1>Roofed Accommodation Finder <span class="sub">Ontario Parks</span></h1>
+  <div id="scanmeta">loading…</div>
+  <button id="rescan" title="Re-pull live availability from Ontario Parks">
+    Rescan
+  </button>
+</header>
+
+<div id="layout">
+
+  <aside id="sidebar">
+    <section class="filters">
+      <div class="row">
+        <label>Nights
+          <input type="number" id="f-nights" value="2" min="1" max="14">
+        </label>
+        <label>Min. sleeps
+          <input type="number" id="f-capacity" placeholder="any" min="1" max="12">
+        </label>
+      </div>
+
+      <div class="row">
+        <label>Arrive after
+          <input type="date" id="f-start">
+        </label>
+        <label>Arrive before
+          <input type="date" id="f-end">
+        </label>
+      </div>
+
+      <fieldset id="f-types">
+        <legend>Type</legend>
+        <label><input type="checkbox" value="cabin" checked> Rustic Cabin</label>
+        <label><input type="checkbox" value="yurt" checked> Yurt / Shelter</label>
+        <label><input type="checkbox" value="cottage" checked> Cottage</label>
+        <label><input type="checkbox" value="trailer" checked> Trailer</label>
+      </fieldset>
+
+      <div class="row checks">
+        <label><input type="checkbox" id="f-weekends"> Fridays only</label>
+        <label><input type="checkbox" id="f-loose"> Include partial</label>
+      </div>
+
+      <input type="search" id="f-park" placeholder="Filter by park name…">
+    </section>
+
+    <div id="summary"></div>
+    <div id="results"></div>
+  </aside>
+
+  <main id="mapwrap">
+    <div id="map"></div>
+    <div id="legend">
+      <strong>Matching stays</strong>
+      <span><i class="dot d0"></i> none</span>
+      <span><i class="dot d1"></i> 1–9</span>
+      <span><i class="dot d2"></i> 10–49</span>
+      <span><i class="dot d3"></i> 50+</span>
+    </div>
+  </main>
+
+</div>
+
+<div id="detail" class="hidden">
+  <div id="detail-inner">
+    <button id="detail-close" aria-label="Close">×</button>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

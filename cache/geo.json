@@ -1,0 +1,261 @@
+{
+ "-2147483568": {
+  "name": "Pinery Provincial Park",
+  "lat": 43.25926,
+  "lon": -81.83629,
+  "precision": "park",
+  "source": "Pinery Provincial Park, Port Franks, Lambton Shores, Lambton County, Southwester"
+ },
+ "-2147483562": {
+  "name": "Quetico Provincial Park",
+  "lat": 48.36741,
+  "lon": -91.46662,
+  "precision": "park",
+  "source": "Quetico Provincial Park, Ontario, Canada"
+ },
+ "-2147483641": {
+  "name": "Arrowhead Provincial Park",
+  "lat": 45.39159,
+  "lon": -79.20044,
+  "precision": "park",
+  "source": "Arrowhead Provincial Park, Huntsville, District Municipality of Muskoka, Muskoka"
+ },
+ "-2147483543": {
+  "name": "Silent Lake Provincial Park",
+  "lat": 44.91653,
+  "lon": -78.06269,
+  "precision": "park",
+  "source": "Silent Lake Provincial Park, Highlands East, Haliburton County, Central Ontario,"
+ },
+ "-2147483625": {
+  "name": "Charleston Lake Provincial Park",
+  "lat": 44.51217,
+  "lon": -75.96743,
+  "precision": "park",
+  "source": "Charleston Lake Provincial Park, Outlet, Leeds and the Thousand Islands, Leeds a"
+ },
+ "-2147483538": {
+  "name": "Sleeping Giant Provincial Park",
+  "lat": 48.43572,
+  "lon": -88.79944,
+  "precision": "park",
+  "source": "Sleeping Giant Provincial Park, Unorganized Thunder Bay District, Thunder Bay Di"
+ },
+ "-2147483549": {
+  "name": "Sandbanks Provincial Park",
+  "lat": 43.90631,
+  "lon": -77.25031,
+  "precision": "park",
+  "source": "Sandbanks Provincial Park, Wellington, Prince Edward County, Central Ontario, On"
+ },
+ "-2147483569": {
+  "name": "Pancake Bay Provincial Park",
+  "lat": 46.96368,
+  "lon": -84.6942,
+  "precision": "park",
+  "source": "Pancake Bay Provincial Park, Unorganized North Algoma, Algoma District, Northeas"
+ },
+ "-2147483580": {
+  "name": "Murphys Point Provincial Park",
+  "lat": 44.77057,
+  "lon": -76.23162,
+  "precision": "park",
+  "source": "Murphys Point Provincial Park, Tay Valley, Lanark County, Eastern Ontario, Ontar"
+ },
+ "-2147483592": {
+  "name": "MacGregor Point Provincial Park",
+  "lat": 44.40405,
+  "lon": -81.4801,
+  "precision": "park",
+  "source": "MacGregor Point Provincial Park, Port Elgin, Saugeen Shores, Bruce County, South"
+ },
+ "-2147483646": {
+  "name": "Lake Superior Provincial Park",
+  "lat": 47.56403,
+  "lon": -84.71192,
+  "precision": "park",
+  "source": "Lake Superior Provincial Park, Algoma District, Northeastern Ontario, Ontario, C"
+ },
+ "-2147483601": {
+  "name": "Killarney Provincial Park",
+  "lat": 46.10209,
+  "lon": -81.41293,
+  "precision": "park",
+  "source": "Killarney Provincial Park, 960, Killarney, Sudbury District, Northeastern Ontari"
+ },
+ "-2147483602": {
+  "name": "Kettle Lakes Provincial Park",
+  "lat": 48.57056,
+  "lon": -80.86898,
+  "precision": "park",
+  "source": "Kettle Lakes Provincial Park, Timmins, Cochrane District, Northeastern Ontario, "
+ },
+ "-2147483607": {
+  "name": "Inverhuron Provincial Park",
+  "lat": 44.30181,
+  "lon": -81.58977,
+  "precision": "park",
+  "source": "Inverhuron Provincial Park, Kincardine, Bruce County, Southwestern Ontario, Onta"
+ },
+ "-2147483609": {
+  "name": "Grundy Lake Provincial Park",
+  "lat": 45.94127,
+  "lon": -80.55084,
+  "precision": "park",
+  "source": "Grundy Lake Provincial Park, Unorganized Centre Parry Sound, Parry Sound Distric"
+ },
+ "-2147483614": {
+  "name": "Finlayson Point Provincial Park",
+  "lat": 47.05504,
+  "lon": -79.80523,
+  "precision": "park",
+  "source": "Finlayson Point Provincial Park, 24, Temagami, Nipissing District, Northeastern "
+ },
+ "-2147483630": {
+  "name": "Bronte Creek Provincial Park - Campground Area",
+  "lat": 43.40969,
+  "lon": -79.7574,
+  "precision": "park",
+  "source": "Bronte Creek Provincial Park, Oakville, Halton Region, Golden Horseshoe, Ontario"
+ },
+ "-2147483634": {
+  "name": "Bon Echo Provincial Park",
+  "lat": 44.90731,
+  "lon": -77.27711,
+  "precision": "park",
+  "source": "Bon Echo Provincial Park, Addington Highlands, Lennox and Addington County, East"
+ },
+ "-2147483599": {
+  "name": "Algonquin - Kiosk Campground",
+  "lat": 46.0847,
+  "lon": -78.8931,
+  "precision": "manual",
+  "source": "manual override"
+ },
+ "-2147483631": {
+  "name": "Algonquin - Brent Campground",
+  "lat": 46.02487,
+  "lon": -78.49029,
+  "precision": "park",
+  "source": "Brent Campground, Brent Road, Unorganized South Nipissing, Nipissing District, N"
+ },
+ "-2147483556": {
+  "name": "Rideau River Provincial Park",
+  "lat": 45.05809,
+  "lon": -75.67028,
+  "precision": "park",
+  "source": "Rideau River Provincial Park, 2680, Becketts Landing, Rideau-Jock, Ottawa, Easte"
+ },
+ "-2147483647": {
+  "name": "Algonquin - Achray Campground / Sand Lake Gate",
+  "lat": 45.86723,
+  "lon": -77.75666,
+  "precision": "park",
+  "source": "Achray Campground, Eastern Pines Backpacking Trail, Unorganized South Nipissing,"
+ },
+ "-2147483639": {
+  "name": "Awenda Provincial Park",
+  "lat": 44.83718,
+  "lon": -79.98721,
+  "precision": "park",
+  "source": "Awenda Provincial Park, Penetanguishene, Simcoe County, Central Ontario, Ontario"
+ },
+ "-2147483637": {
+  "name": "Bass Lake Provincial Park",
+  "lat": 44.60282,
+  "lon": -79.48281,
+  "precision": "park",
+  "source": "Bass Lake Provincial Park, Oro-Medonte, Simcoe County, Central Ontario, Ontario,"
+ },
+ "-2147483633": {
+  "name": "Bonnechere Provincial Park",
+  "lat": 45.6606,
+  "lon": -77.57061,
+  "precision": "park",
+  "source": "Bonnechere Provincial Park, 4024, Bonnechere, Killaloe, Hagarty and Richards, Re"
+ },
+ "-2147483535": {
+  "name": "Sturgeon Bay Provincial Park",
+  "lat": 45.62359,
+  "lon": -80.41613,
+  "precision": "park",
+  "source": "Sturgeon Bay Provincial Park, The Archipelago Township, Parry Sound District, Ce"
+ },
+ "-2147483552": {
+  "name": "Rushing River Provincial Park",
+  "lat": 49.68357,
+  "lon": -94.22389,
+  "precision": "park",
+  "source": "Rushing River Provincial Park, Unorganized Kenora District, Kenora District, Nor"
+ },
+ "-2147483524": {
+  "name": "Windy Lake Provincial Park",
+  "lat": 46.62056,
+  "lon": -81.45014,
+  "precision": "park",
+  "source": "Windy Lake Provincial Park, Unorganized North Sudbury, Sudbury District, Northea"
+ },
+ "-2147483528": {
+  "name": "Wakami Lake Provincial Park",
+  "lat": 47.47723,
+  "lon": -82.82319,
+  "precision": "park",
+  "source": "Wakami Lake Provincial Park, Unorganized North Sudbury, Sudbury District, Northe"
+ },
+ "-2147483558": {
+  "name": "Rene Brunelle Provincial Park",
+  "lat": 49.44778,
+  "lon": -82.13041,
+  "precision": "park",
+  "source": "Rene Brunelle Provincial Park, Moonbeam Township, Cochrane District, Northeaster"
+ },
+ "-2147483578": {
+  "name": "Neys Provincial Park",
+  "lat": 48.75606,
+  "lon": -86.57614,
+  "precision": "park",
+  "source": "Neys Provincial Park, Unorganized Thunder Bay District, Thunder Bay District, No"
+ },
+ "-2147483610": {
+  "name": "Fushimi Lake Provincial Park",
+  "lat": 49.81129,
+  "lon": -83.90444,
+  "precision": "park",
+  "source": "Fushimi Lake Provincial Park, Unorganized North Cochrane, Cochrane District, Nor"
+ },
+ "-2147483635": {
+  "name": "Blue Lake Provincial Park",
+  "lat": 49.9148,
+  "lon": -93.50759,
+  "precision": "park",
+  "source": "Blue Lake Provincial Park, Unorganized Kenora District, Kenora District, Northwe"
+ },
+ "-2147483644": {
+  "name": "Algonquin Backcountry",
+  "lat": 45.49313,
+  "lon": -78.23864,
+  "precision": "city",
+  "source": "Whitney, South Algonquin Township, Nipissing District, Northeastern Ontario, Ont"
+ },
+ "-2147483638": {
+  "name": "Balsam Lake Provincial Park",
+  "lat": 44.62555,
+  "lon": -78.86542,
+  "precision": "park",
+  "source": "Balsam Lake Provincial Park, Kawartha Lakes, Central Ontario, Ontario, Canada"
+ },
+ "-2147483563": {
+  "name": "Presqu'ile Provincial Park",
+  "lat": 43.99057,
+  "lon": -77.71553,
+  "precision": "park",
+  "source": "Presqu'ile Provincial Park, 328, Brighton, Northumberland County, Central Ontari"
+ },
+ "-2147483585": {
+  "name": "Algonquin - Mew Lake Campground",
+  "lat": 45.57555,
+  "lon": -78.51724,
+  "precision": "park",
+  "source": "Mew Lake Campground, Highway 60, Unorganized South Nipissing, Nipissing District"
+ }
+}
