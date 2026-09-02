@@ -1,19 +1,25 @@
 """Vercel serverless entry point for the roofed-accommodation finder.
 
-Serverless changes two things about how this app gets its data:
+Where the data comes from
+-------------------------
+This function does NOT scan Ontario Parks. It cannot: requests to
+reservations.ontarioparks.ca from Vercel's AWS egress are answered with
+HTTP 403, while the same request from a residential IP or a GitHub-hosted
+runner succeeds. Measured, not assumed.
 
-* The filesystem is read-only and per-instance, so there is no shared
-  cache/availability.json to read. Availability is fetched live from Ontario
-  Parks and held in a module-level cache that survives warm invocations.
-* Responses carry CDN cache headers, so repeated requests are served from
-  Vercel's edge rather than re-scanning. That keeps our polling of Ontario
-  Parks roughly constant no matter how much traffic the page gets.
+So the scan runs in GitHub Actions (.github/workflows/refresh.yml), which
+commits cache/availability.json, and that commit triggers a Vercel redeploy.
+This function just reads the committed snapshot, which ships in the bundle.
+Every response reports how old that snapshot is so the UI can say so plainly
+rather than implying the numbers are live.
 
-Park inventory and coordinates are static and ship with the deployment.
+Setting ALLOW_LIVE_SCAN=1 makes it try a live scan first. That is only useful
+if Ontario Parks ever stops blocking AWS; it is off by default because the
+403 retry path costs ~18 seconds before failing.
 
-All filtering stays in Python on purpose. The minimum-stay rules are subtle
-(see the README), and reimplementing them in JavaScript for the browser would
-mean maintaining the same tricky logic twice.
+Filtering stays in Python on purpose. The minimum-stay rules are subtle (see
+the README) and reimplementing them in JavaScript would mean maintaining the
+same tricky logic twice.
 """
 
 from __future__ import annotations
@@ -38,6 +44,9 @@ import op_roofed  # noqa: E402
 
 # How long a scan is reused before we go back to Ontario Parks.
 SCAN_TTL = int(os.environ.get("SCAN_TTL_SECONDS", "900"))
+# Off by default: Vercel's egress is 403ed, so a live attempt just burns ~18s
+# of retries before falling back to the snapshot anyway.
+ALLOW_LIVE_SCAN = os.environ.get("ALLOW_LIVE_SCAN", "") in ("1", "true", "yes")
 SCAN_DAYS = int(os.environ.get("SCAN_DAYS", "210"))
 # Edge cache: serve instantly, refresh in the background.
 CDN_CACHE = f"public, s-maxage={SCAN_TTL}, stale-while-revalidate=1800"
@@ -72,23 +81,60 @@ def load_static():
     return _cache["inv"], _cache["geo"]
 
 
+def _live_scan():
+    load_static()
+    ns = argparse.Namespace(park=None, start=None, end=None,
+                            days=SCAN_DAYS, workers=6)
+    # quiet: 52 progress lines per scan would flood the function logs
+    return op_roofed.cmd_scan(ns, write=False, quiet=True)
+
+
+def _snapshot():
+    """The availability committed by the refresh workflow."""
+    p = _find("cache", "availability.json")
+    if not p:
+        raise RuntimeError(
+            "cache/availability.json is missing from the deployment. It is "
+            "produced by the refresh-availability GitHub Action and committed "
+            "to the repo; run that workflow, or `python op_roofed.py scan` "
+            "locally and commit the result.")
+    with io.open(p, encoding="utf-8") as fh:
+        scan = json.load(fh)
+    scan["source"] = "snapshot"
+    return scan
+
+
 def get_scan(force=False):
-    """Live availability, reused for SCAN_TTL seconds within a warm instance."""
+    """Availability, from the committed snapshot unless live is enabled."""
     with _lock:
         fresh = _cache["scan"] and (time.time() - _cache["at"]) < SCAN_TTL
         if fresh and not force:
             return _cache["scan"]
 
-    load_static()
-    ns = argparse.Namespace(park=None, start=None, end=None,
-                            days=SCAN_DAYS, workers=6)
-    # quiet: 52 progress lines per scan would flood the function logs
-    scan = op_roofed.cmd_scan(ns, write=False, quiet=True)
+    scan = None
+    if ALLOW_LIVE_SCAN:
+        try:
+            scan = _live_scan()
+            scan["source"] = "live"
+        except Exception:  # noqa: BLE001 - fall back to the shipped snapshot
+            scan = None
+    if scan is None:
+        scan = _snapshot()
 
     with _lock:
         _cache["scan"] = scan
         _cache["at"] = time.time()
     return scan
+
+
+def scan_meta(scan):
+    """How old the data is, so the UI can be honest about it."""
+    epoch = scan.get("scannedEpoch")
+    age = int(time.time() - epoch) if epoch else None
+    return {"scannedAt": scan.get("scannedAt"),
+            "scannedEpoch": epoch,
+            "ageSeconds": age,
+            "source": scan.get("source", "snapshot")}
 
 
 # ---------------------------------------------------------------------------
@@ -159,13 +205,15 @@ def search_payload(qs):
         })
     parks.sort(key=lambda p: (-p["total"], p["name"]))
 
-    return {
-        "scannedAt": scan["scannedAt"], "start": scan["start"],
-        "end": scan["end"], "total": len(stays), "parks": parks,
+    payload = {
+        "start": scan["start"], "end": scan["end"],
+        "total": len(stays), "parks": parks,
         "blocked": [{"park": k, "minNights": v["minNights"]}
                     for k, v in sorted(rejected.items(),
                                        key=lambda kv: -kv[1]["count"])],
     }
+    payload.update(scan_meta(scan))
+    return payload
 
 
 def park_payload(qs):
@@ -248,12 +296,13 @@ class handler(BaseHTTPRequestHandler):
                                   sorted(set(op_roofed.ROOFED_CATEGORIES.values())),
                                   cache=True)
             if action in ("scan", "cron"):
-                # `scan` is the Rescan button, `cron` is the scheduled warm-up.
+                # Refreshing is the GitHub Action's job, not ours; this just
+                # reports which snapshot the deployment is currently serving.
                 scan = get_scan(force=(action == "scan"))
-                return self._send(200, {"ok": True,
-                                        "scannedAt": scan["scannedAt"],
-                                        "start": scan["start"],
-                                        "end": scan["end"]})
+                body = {"ok": True, "start": scan["start"],
+                        "end": scan["end"]}
+                body.update(scan_meta(scan))
+                return self._send(200, body)
             return self._send(404, {"error": f"unknown action '{action}'"})
         except Exception as exc:  # noqa: BLE001
             return self._send(500, {"error": str(exc)})

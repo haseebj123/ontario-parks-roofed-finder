@@ -1,0 +1,63 @@
+name: refresh-availability
+
+# Vercel's AWS egress is blocked by reservations.ontarioparks.ca (HTTP 403),
+# so the deployed app cannot scan for itself. GitHub-hosted runners are not
+# blocked, so the scan happens here and the resulting commit is what ships
+# fresh data to production: Vercel redeploys on every push to main.
+#
+# Change the cron below to trade freshness against commit noise. Hourly is
+# ~24 commits a day. For real-time cancellation alerts use the `watch`
+# command locally instead; this schedule only feeds the browsing UI.
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # hourly, off the hour to avoid peak scheduling lag
+  workflow_dispatch:        # lets you refresh on demand from the Actions tab
+
+concurrency:
+  group: refresh-availability
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Scan Ontario Parks availability
+        run: python op_roofed.py scan --days 210 --workers 4
+
+      - name: Show what we got
+        run: |
+          python - <<'PY'
+          import json, io
+          d = json.load(io.open('cache/availability.json', encoding='utf-8'))
+          units = sum(len(p['units']) for p in d['parks'].values())
+          print(f"window {d['start']} .. {d['end']}")
+          print(f"{len(d['parks'])} parks, {units} roofed units")
+          PY
+
+      - name: Commit if the availability actually changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Ignore the timestamp-only diff so unchanged availability does not
+          # produce an empty commit and a pointless redeploy every hour.
+          if git diff --quiet -- cache/availability.json; then
+            echo "No change to availability; nothing to commit."
+            exit 0
+          fi
+          CHANGED=$(git diff --numstat -- cache/availability.json | awk '{print $1"+/"$2"-"}')
+          git add cache/availability.json
+          git commit -m "Refresh availability ($CHANGED)
+
+          Scanned by the refresh-availability workflow. Vercel redeploys from
+          this commit, which is how production gets fresh data."
+          git push

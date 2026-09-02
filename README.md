@@ -166,51 +166,67 @@ rate-limited to Nominatim's 1 request/second and only needs to run once.
 
 ---
 
-## 2c. Deploying to Vercel
+## 2c. Deployed on Vercel
 
-The repo is Vercel-ready. Connect it once in the dashboard and every push to
-`main` deploys itself.
+Live at **https://ontario-parks-roofed-finder.vercel.app**, deployed from
+GitHub: every push to `main` redeploys automatically.
 
-1. Vercel dashboard → **Add New… → Project** → import
-   `haseebj123/ontario-parks-roofed-finder`.
-2. Framework preset **Other**. Leave build/output settings empty; `vercel.json`
-   already describes everything.
-3. Deploy.
-4. **Settings → Deployment Protection → enable Vercel Authentication.**
-   Do this. See the warning below.
+### Ontario Parks blocks Vercel, so CI does the scanning
 
-No environment variables are required. Two optional ones:
-`SCAN_TTL_SECONDS` (default 900) and `SCAN_DAYS` (default 210).
+This one dictated the whole architecture, and I only found it by deploying
+and watching production fail.
 
-### How it works when deployed
+`reservations.ontarioparks.ca` answers **HTTP 403** to requests from Vercel's
+AWS egress, while the identical request succeeds from a residential IP and
+from a GitHub-hosted runner (Azure). So the deployed function cannot scan for
+itself, and the obvious "browser fetches it directly" workaround is dead too:
+the API sends `Access-Control-Allow-Origin: reservations.ontarioparks.ca`, so
+no other origin can read it.
 
-Serverless has no persistent disk, so the data model changes:
+What works:
+
+```
+GitHub Actions (hourly)  ->  scans Ontario Parks  ->  commits
+cache/availability.json  ->  Vercel redeploys     ->  app serves that snapshot
+```
+
+`.github/workflows/refresh.yml` runs `op_roofed.py scan` on a schedule and
+commits only when availability actually changed, so unchanged hours do not
+produce empty commits or pointless redeploys. You can also trigger it by hand
+from the Actions tab.
+
+The consequence is that **the deployed app serves a snapshot, not live data**,
+so it says so: the header reads "data 12 min ago" and turns amber past three
+hours. The button is labelled "Rescan" locally (where a live scan works) and
+"Refresh" when deployed (where all it can do is pick up the newest published
+snapshot). For real-time cancellation hunting, run `watch` locally; it is not
+subject to any of this.
 
 | | Local | Vercel |
 |---|---|---|
-| Park inventory, coordinates | `cache/*.json` | same files, bundled via `includeFiles` |
-| Availability | `cache/availability.json` on disk | fetched live, cached in memory + at the CDN |
+| Inventory, coordinates | `cache/*.json` | same files, bundled |
+| Availability | live scan, ~5s | committed snapshot, ~0.1s |
+| Freshness | instant | up to 1 hour |
 
-`api/index.py` is a single function serving every `/api/*` route
-(`vercel.json` rewrites `/api/:action` to `/api/index?action=:action`). A cold
-start scans Ontario Parks live, which takes about 5 seconds; warm requests
-answer in ~0.2s. Responses carry `s-maxage=900, stale-while-revalidate=1800`,
-so Vercel's edge absorbs repeat traffic and our polling of Ontario Parks stays
-roughly constant no matter how many people load the page. An hourly cron keeps
-a warm instance around.
+### Deploying your own
 
-Filtering deliberately stays in Python rather than moving to the browser. The
-minimum-stay rules are subtle enough that maintaining them in two languages
-would invite exactly the bug documented in section 3.
+1. Import the repo at vercel.com. Framework preset **Other**; `vercel.json`
+   describes everything.
+2. Enable the refresh workflow (Actions tab) so data stays current.
+3. **Settings -> Deployment Protection.** See below.
 
-### Before you make it public
+Optional env vars: `SCAN_TTL_SECONDS` (default 900), `SCAN_DAYS` (210), and
+`ALLOW_LIVE_SCAN=1` if Ontario Parks ever stops blocking AWS.
 
-The GitHub repo being public is fine; sharing the code costs Ontario Parks
-nothing. **An unprotected deployment is a different thing.** It is a public
-endpoint that scans a government booking system, and every visitor, crawler
-and bot multiplies that load. Turn on Vercel Authentication so only your
-account can open it. It takes one click and keeps this a personal tool rather
-than a service you are unintentionally operating.
+### Your production URL is public by default
+
+Vercel's default "Standard Protection" guards preview and per-deployment URLs
+but leaves the production domain open, so
+`your-project.vercel.app` is reachable by anyone. For this app that mostly
+means strangers reading a cached JSON snapshot rather than hammering Ontario
+Parks, but if you would rather it stay yours, set Deployment Protection to
+**All Deployments** in project settings. `public/robots.txt` disallows
+crawlers regardless.
 
 ---
 
@@ -415,9 +431,10 @@ these endpoints end up behind the same WAF the `.com` host already uses:
 | `server.py` | local web app (map + search) |
 | `public/` | front end: `index.html`, `app.js`, `style.css` |
 | `api/index.py` | Vercel serverless entry point |
-| `vercel.json` | deployment config (routes, cron, bundled files) |
+| `vercel.json` | deployment config (routes, bundled files) |
+| `.github/workflows/refresh.yml` | hourly scan that feeds production |
 | `cache/inventory.json` | 37 parks, 196 units (from `refresh`) |
-| `cache/availability.json` | last scan (from `scan`) |
+| `cache/availability.json` | last scan; committed, refreshed hourly by CI |
 | `cache/geo.json` | park coordinates (from `geocode.py`) |
 
 ## Quick start

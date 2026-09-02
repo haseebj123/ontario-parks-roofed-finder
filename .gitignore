@@ -1,6 +1,7 @@
-# Live availability snapshot: regenerate with `python op_roofed.py scan`.
-# Committing it would ship stale data that looks current.
-cache/availability.json
+# cache/availability.json IS committed. Vercel's AWS egress gets 403 from
+# reservations.ontarioparks.ca, so the deployed app cannot scan for itself.
+# A scheduled GitHub Action (which is not blocked) scans and commits it, and
+# that commit is what ships fresh data to production.
 
 # Raw park feed, ~560KB and rebuilt automatically by geocode.py.
 cache/parks_raw.json

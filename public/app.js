@@ -101,6 +101,16 @@ function drawMarkers(parks) {
 
 /* ---------------- sidebar ---------------- */
 
+function ago(seconds) {
+  if (seconds == null) return "";
+  const m = Math.round(seconds / 60);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h ago`;
+  return `${Math.round(h / 24)} d ago`;
+}
+
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -281,9 +291,31 @@ function refresh(debounce = 0) {
       if (payload.error) return toast(payload.error);
       lastPayload = payload;
       firstLoad = false;
+      const age = ago(payload.ageSeconds);
+      const live = payload.source === "live";
       $("#scanmeta").textContent =
-        `scan ${payload.scannedAt.replace("T", " ")} · ` +
+        (live ? "live · " : `data ${age} · `) +
         `${payload.start} → ${payload.end}`;
+      $("#scanmeta").title = payload.scannedAt
+        ? `Availability scanned at ${payload.scannedAt}`
+        : "";
+      // Stale data is worth flagging: this is a cancellation hunt.
+      $("#scanmeta").classList.toggle(
+        "stale", !live && payload.ageSeconds != null &&
+                 payload.ageSeconds > 3 * 3600);
+
+      const b = $("#rescan");
+      if (live) {
+        b.textContent = "Rescan";
+        b.title = "Pull fresh availability from Ontario Parks now";
+      } else {
+        // Deployed: Ontario Parks blocks Vercel, so a GitHub Action does the
+        // scanning hourly. All this button can do is pick up the newest one.
+        b.textContent = "Refresh";
+        b.title = "Ontario Parks blocks requests from Vercel, so a scheduled "
+                + "GitHub Action scans hourly and redeploys. This re-checks "
+                + "for the newest published data.";
+      }
       drawMarkers(payload.parks);
       renderList(payload);
     } catch (err) {
@@ -321,18 +353,21 @@ function wire() {
 
   $("#rescan").onclick = async () => {
     const b = $("#rescan");
-    b.disabled = true; b.textContent = "Scanning…";
+    const label = b.textContent;
+    b.disabled = true; b.textContent = "Checking…";
     try {
       const r = await fetch("/api/scan?_=" + Date.now(), { method: "POST" })
         .then((x) => x.json());
-      // Change the search URL so the CDN cannot serve pre-scan results.
+      // Change the search URL so the CDN cannot serve pre-refresh results.
       cacheBust = String(Date.now());
-      toast(r.error ? r.error : "Fresh data pulled from Ontario Parks");
+      if (r.error) toast(r.error);
+      else if (r.source === "live") toast("Fresh data pulled from Ontario Parks");
+      else toast(`Showing data from ${ago(r.ageSeconds)}`);
       refresh();
     } catch (err) {
       toast("Scan failed: " + err);
     } finally {
-      b.disabled = false; b.textContent = "Rescan";
+      b.disabled = false; b.textContent = label;
     }
   };
 }

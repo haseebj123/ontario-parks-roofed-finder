@@ -2,14 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/index.py": {
-      "includeFiles": "{op_roofed.py,cache/inventory.json,cache/geo.json}",
-      "maxDuration": 60
+      "includeFiles": "{op_roofed.py,cache/inventory.json,cache/geo.json,cache/availability.json}",
+      "maxDuration": 15
     }
   },
   "rewrites": [
     { "source": "/api/:action", "destination": "/api/index?action=:action" }
-  ],
-  "crons": [
-    { "path": "/api/index?action=cron", "schedule": "0 * * * *" }
   ]
 }

@@ -234,3 +234,7 @@ input[type=checkbox] { accent-color: var(--accent); margin: 0; }
   box-shadow: 0 6px 20px rgba(0,0,0,.5);
 }
 .empty { padding: 24px 16px; color: var(--ink-dim); text-align: center; }
+
+/* Data age: the deployed build serves a snapshot refreshed by CI, so say when
+   it was taken and shout if it has gone stale. */
+#scanmeta.stale { color: var(--amber); font-weight: 600; }

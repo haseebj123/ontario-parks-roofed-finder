@@ -368,6 +368,10 @@ def cmd_scan(args, write=True, quiet=False):
         "start": start,
         "end": end,
         "scannedAt": dt.datetime.now().isoformat(timespec="seconds"),
+        # Scans can be produced on a CI runner in UTC and read by a browser in
+        # any timezone, so record an absolute instant too. `scannedAt` above
+        # stays local for readable CLI output.
+        "scannedEpoch": int(time.time()),
         "parks": {},
     }
 
