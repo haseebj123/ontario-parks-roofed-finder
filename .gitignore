@@ -16,6 +16,13 @@ venv/
 .env
 .env.*
 
+# Written by `vercel build` when no Python manifest exists. They pin whatever
+# Python the local machine happens to have, which is not necessarily the
+# version Vercel builds with (it uses 3.12), so committing them would make
+# deploys depend on whoever ran the build last.
+pyproject.toml
+uv.lock
+
 # Local noise
 server.log
 *.log
