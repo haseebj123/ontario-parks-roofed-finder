@@ -21,3 +21,5 @@ server.log
 *.log
 .DS_Store
 Thumbs.db
+
+.vercel

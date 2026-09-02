@@ -1,0 +1,5 @@
+# This app queries a live government booking system on each cold start.
+# Crawling it multiplies that load against Ontario Parks for no benefit to
+# anyone, so please stay out. Humans are welcome; see the repository README.
+User-agent: *
+Disallow: /
