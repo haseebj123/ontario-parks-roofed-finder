@@ -411,9 +411,32 @@ def load_scan():
 # search
 # ----------------------------------------------------------------------------
 
+WEEKDAYS = {"mon": 0, "tue": 1, "wed": 2, "thu": 3,
+            "fri": 4, "sat": 5, "sun": 6}
+# A weekend trip is one you arrive for on Friday or Saturday.
+WEEKEND_ARRIVALS = {4, 5}
+
+
+def parse_arrival(raw):
+    """'weekend' | 'fri' | 'fri,sat' | 'any' -> set of weekday ints, or None."""
+    if not raw:
+        return None
+    raw = raw.strip().lower()
+    if raw in ("any", "all", ""):
+        return None
+    if raw in ("weekend", "weekends"):
+        return set(WEEKEND_ARRIVALS)
+    days = set()
+    for token in raw.split(","):
+        token = token.strip().lower()[:3]
+        if token in WEEKDAYS:
+            days.add(WEEKDAYS[token])
+    return days or None
+
+
 def find_stays(inv, scan, nights, want_cats=None, park_filter=None,
-               weekends_only=False, min_capacity=None, loose=False,
-               date_from=None, date_to=None, ignore_rules=False,
+               weekends_only=False, arrival_days=None, min_capacity=None,
+               loose=False, date_from=None, date_to=None, ignore_rules=False,
                rejected=None):
     """Return a list of bookable stays matching the criteria.
 
@@ -426,6 +449,10 @@ def find_stays(inv, scan, nights, want_cats=None, park_filter=None,
     ok = SOFT_BOOKABLE if loose else BOOKABLE
     start = dt.date.fromisoformat(scan["start"])
     results = []
+
+    # `weekends_only` predates the arrival-day selector and means Fridays.
+    if arrival_days is None and weekends_only:
+        arrival_days = {4}
 
     lo = dt.date.fromisoformat(date_from) if date_from else None
     hi = dt.date.fromisoformat(date_to) if date_to else None
@@ -463,7 +490,7 @@ def find_stays(inv, scan, nights, want_cats=None, park_filter=None,
                     continue
                 if hi and arrive > hi:
                     continue
-                if weekends_only and arrive.weekday() != 4:  # Friday arrival
+                if arrival_days is not None and arrive.weekday() not in arrival_days:
                     continue
 
                 if not ignore_rules and not stay_allowed(sched, arrive, nights):
@@ -555,6 +582,7 @@ def cmd_search(args):
         want_cats=parse_types(args.type),
         park_filter=args.park,
         weekends_only=args.weekends,
+        arrival_days=parse_arrival(args.arrive),
         min_capacity=args.capacity,
         loose=args.loose,
         date_from=args.start,
@@ -600,6 +628,7 @@ def cmd_watch(args):
                 want_cats=want_cats,
                 park_filter=args.park,
                 weekends_only=args.weekends,
+                arrival_days=parse_arrival(args.arrive),
                 min_capacity=args.capacity,
                 loose=args.loose,
                 date_from=args.start,
@@ -657,7 +686,10 @@ def add_common(p, with_dates=True):
                                   "yurt, cabin, cottage, trailer")
     p.add_argument("--nights", type=int, default=2)
     p.add_argument("--weekends", action="store_true",
-                   help="Friday arrivals only")
+                   help="Friday arrivals only (same as --arrive fri)")
+    p.add_argument("--arrive",
+                   help="arrival days: weekend (Fri or Sat), any, or a comma "
+                        "list like fri,sat")
     p.add_argument("--capacity", type=int,
                    help="minimum sleeping capacity")
     p.add_argument("--loose", action="store_true",

@@ -83,7 +83,8 @@ python op_roofed.py watch --nights 2 --weekends --park Pinery --interval 900
 | `--park Pinery` | substring match on park name |
 | `--type cabin,yurt,cottage,trailer` | roofed type (comma list) |
 | `--nights 2` | stay length |
-| `--weekends` | Friday arrivals only |
+| `--weekends` | Friday arrivals only (same as `--arrive fri`) |
+| `--arrive weekend` | Friday **or** Saturday arrivals; also `--arrive fri,sat` |
 | `--capacity 6` | minimum sleeping capacity |
 | `--start` / `--end` | restrict arrival dates |
 | `--loose` | also accept `PartiallyAvailable` |
@@ -141,14 +142,22 @@ python server.py                # opens http://127.0.0.1:8765
 Nothing is exposed off your machine; it binds to `127.0.0.1` by default.
 Python standard library only on the server side. Leaflet comes from a CDN.
 
+The interface follows Apple's light styling: system typography, grouped
+cards, a segmented control, iOS accent colours (blue for actions, green /
+orange / red for availability), and plain OpenStreetMap tiles that suit a
+light theme without needing a keyed provider.
+
 **What it does**
 
 - **Map.** One marker per park, labelled with its number of matching stays.
   Grey = nothing, red = 1–9, amber = 10–49, green = 50+. Click a marker for a
   breakdown by unit type; click a park in the list to fly to it.
 - **Filters** apply live to both map and list: nights, minimum sleeping
-  capacity, arrival window, unit type, Fridays-only, include-partial, and a
-  park name search.
+  capacity, arrival window, unit type, include-partial, and a park search.
+- **Arrive on** is a segmented control: Any day / Weekend / Friday / Saturday.
+  Weekend means arriving Friday or Saturday, which is the usual shape of a
+  weekend trip and roughly doubles the hits over Friday-only (1,639 vs 820
+  for a 2-night stay on the current snapshot).
 - **Park detail drawer.** A day-by-day availability grid for every unit in the
   park, all sharing one horizontal scroller under a month ruler, so you can
   read straight down a date column and compare units. Hover any cell for the

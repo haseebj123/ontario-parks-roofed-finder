@@ -26,7 +26,8 @@ function filters() {
   if ($("#f-capacity").value) p.set("capacity", $("#f-capacity").value);
   if ($("#f-start").value) p.set("start", $("#f-start").value);
   if ($("#f-end").value) p.set("end", $("#f-end").value);
-  if ($("#f-weekends").checked) p.set("weekends", "1");
+  const arrive = document.querySelector('#f-arrive input:checked');
+  if (arrive && arrive.value !== "any") p.set("arrive", arrive.value);
   if ($("#f-loose").checked) p.set("loose", "1");
   const park = $("#f-park").value.trim();
   if (park) p.set("park", park);
@@ -51,9 +52,8 @@ function bucket(n) {
 
 function initMap() {
   map = L.map("map", { zoomControl: true }).setView([48.4, -84.0], 5);
-  // Plain OSM tiles: no API key, no sign-up. The dark look comes from a CSS
-  // filter on the tile pane (see #map .leaflet-tile-pane in style.css) rather
-  // than from a themed tile provider, all of which now want a key.
+  // Plain OSM tiles: no API key, no sign-up, and they suit the light theme
+  // as-is (the old dark build inverted them in CSS).
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -68,14 +68,15 @@ function drawMarkers(parks) {
   parks.forEach((p) => {
     if (p.lat == null || p.lon == null) return;
     const b = bucket(p.total);
-    const size = p.total ? Math.min(38, 19 + Math.sqrt(p.total) * 1.5) : 14;
-    const colors = ["#55636f", "#ff6b6b", "#ffc24b", "#3ddc84"];
+    const size = p.total ? Math.min(34, 18 + Math.log10(p.total + 1) * 5) : 13;
+    const colors = ["#c7c7cc", "#ff3b30", "#ff9500", "#34c759"];
+    // log scale: counts span 1..1500+, so linear sizing swamps the map
 
     const icon = L.divIcon({
       className: "",
       html:
         `<div class="pin" style="width:${size}px;height:${size}px;` +
-        `background:${colors[b]};opacity:${p.total ? 1 : 0.55}">` +
+        `background:${colors[b]};opacity:${p.total ? 1 : 0.6}">` +
         `${p.total || ""}</div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
@@ -88,7 +89,7 @@ function drawMarkers(parks) {
       .map(([k, v]) => `${k}: ${v}`).join("<br>") || "nothing matching";
     m.bindPopup(
       `<b>${esc(p.name)}</b><br>` +
-      `<span style="color:#93a4b4">${p.unitCount} roofed unit(s)</span><br><br>` +
+      `<span style="color:#6e6e73">${p.unitCount} roofed unit(s)</span><br><br>` +
       `<b>${p.total}</b> matching stay(s)` +
       (p.earliest ? `<br>earliest ${p.earliest}` : "") +
       `<br><br>${types}` +
@@ -156,7 +157,10 @@ function renderList(payload) {
       `<span class="nm"><b>${esc(p.name)}</b>` +
       `<small>${esc(types)}${p.earliest ? " · from " + p.earliest : ""}` +
       `${blockedNote}</small></span>` +
-      `<span class="count">${p.total || "–"}</span></div>`
+      `<span class="count">${p.total || "–"}</span>` +
+      `<svg class="chev" width="7" height="12" viewBox="0 0 7 12" fill="none" ` +
+      `stroke="currentColor" stroke-width="2" stroke-linecap="round" ` +
+      `stroke-linejoin="round"><path d="M1 1l5 5-5 5"/></svg></div>`
     );
   }).join("");
 
@@ -292,10 +296,9 @@ function refresh(debounce = 0) {
       lastPayload = payload;
       firstLoad = false;
       const age = ago(payload.ageSeconds);
-      const live = payload.source === "live";
+      const live = payload.canScan !== false;
       $("#scanmeta").textContent =
-        (live ? "live · " : `data ${age} · `) +
-        `${payload.start} → ${payload.end}`;
+        (age ? `data ${age} · ` : "") + `${payload.start} → ${payload.end}`;
       $("#scanmeta").title = payload.scannedAt
         ? `Availability scanned at ${payload.scannedAt}`
         : "";
@@ -338,7 +341,9 @@ function toast(msg, ms = 2600) {
 function wire() {
   ["#f-nights", "#f-capacity", "#f-start", "#f-end"].forEach(
     (s) => ($(s).oninput = () => refresh(350)));
-  ["#f-weekends", "#f-loose"].forEach((s) => ($(s).onchange = () => refresh()));
+  $("#f-loose").onchange = () => refresh();
+  document.querySelectorAll("#f-arrive input")
+    .forEach((r) => (r.onchange = () => refresh()));
   document.querySelectorAll("#f-types input")
     .forEach((c) => (c.onchange = () => refresh()));
   $("#f-park").oninput = () => refresh(300);

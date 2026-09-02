@@ -134,7 +134,9 @@ def scan_meta(scan):
     return {"scannedAt": scan.get("scannedAt"),
             "scannedEpoch": epoch,
             "ageSeconds": age,
-            "source": scan.get("source", "snapshot")}
+            "source": scan.get("source", "snapshot"),
+            # Ontario Parks 403s Vercel, so Rescan cannot mean "scan now".
+            "canScan": bool(ALLOW_LIVE_SCAN)}
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +161,7 @@ def parse_filters(qs):
         "want_cats": cats,
         "park_filter": one("park"),
         "weekends_only": one("weekends") in ("1", "true", "yes"),
+        "arrival_days": op_roofed.parse_arrival(one("arrive")),
         "min_capacity": int(cap) if cap else None,
         "loose": one("loose") in ("1", "true", "yes"),
         "date_from": one("start"),

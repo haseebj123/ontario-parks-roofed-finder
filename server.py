@@ -25,6 +25,7 @@ import io
 import json
 import os
 import threading
+import time
 import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -80,6 +81,7 @@ def parse_filters(qs):
         "want_cats": cats,
         "park_filter": one("park"),
         "weekends_only": one("weekends") in ("1", "true", "yes"),
+        "arrival_days": op_roofed.parse_arrival(one("arrive")),
         "min_capacity": int(cap) if cap else None,
         "loose": one("loose") in ("1", "true", "yes"),
         "date_from": one("start"),
@@ -132,8 +134,14 @@ def search_payload(qs):
         })
     parks.sort(key=lambda p: (-p["total"], p["name"]))
 
+    epoch = scan.get("scannedEpoch")
     return {
         "scannedAt": scan["scannedAt"],
+        "scannedEpoch": epoch,
+        "ageSeconds": int(time.time() - epoch) if epoch else None,
+        # Running locally, so Ontario Parks is reachable and Rescan works.
+        "source": "local",
+        "canScan": True,
         "start": scan["start"],
         "end": scan["end"],
         "total": len(stays),
