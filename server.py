@@ -32,7 +32,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import op_roofed
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-WEB = os.path.join(HERE, "web")
+# Same directory Vercel serves as static root, so local and deployed builds
+# run the identical front end.
+WEB = os.path.join(HERE, "public")
 CACHE = os.path.join(HERE, "cache")
 
 # Guards the cached data while a rescan swaps it out underneath readers.

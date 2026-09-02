@@ -320,7 +320,8 @@ def load_inventory():
 # scan: pull day-by-day availability
 # ----------------------------------------------------------------------------
 
-def cmd_scan(args, write=True):
+def cmd_scan(args, write=True, quiet=False):
+    say = (lambda *a: None) if quiet else print
     inv = load_inventory()
     start = args.start or dt.date.today().isoformat()
     end = args.end or (dt.date.fromisoformat(start)
@@ -337,7 +338,7 @@ def cmd_scan(args, write=True):
     if not jobs:
         sys.exit("No maps matched. Check --park.")
 
-    print(f"Scanning {len(jobs)} map(s) across {start} .. {end}")
+    say(f"Scanning {len(jobs)} map(s) across {start} .. {end}")
 
     def fetch(job):
         pid, pname, map_id = job
@@ -381,8 +382,8 @@ def cmd_scan(args, write=True):
                 if rid not in park["units"]:
                     continue  # non-roofed resource sharing the same map
                 bucket["units"][rid] = [d["availability"] for d in series]
-            print(f"  [{done}/{len(jobs)}] {park['name']} map {map_id}: "
-                  f"{len(bucket['units'])} roofed units")
+            say(f"  [{done}/{len(jobs)}] {park['name']} map {map_id}: "
+                f"{len(bucket['units'])} roofed units")
 
     # `watch` passes write=False so a filtered watch never clobbers the
     # full-province scan that `search` reads from.
@@ -390,7 +391,7 @@ def cmd_scan(args, write=True):
         path = os.path.join(CACHE, "availability.json")
         with io.open(path, "w", encoding="utf-8") as fh:
             json.dump(scan, fh)
-        print(f"\nWrote {path}")
+        say(f"\nWrote {path}")
     return scan
 
 

@@ -127,7 +127,7 @@ you will need the watcher for.
 
 ## 2b. The map app
 
-`server.py` + `web/` is a local web app: a map of every roofed park, coloured
+`server.py` + `public/` is a local web app: a map of every roofed park, coloured
 and sized by how much availability matches your filters, with a searchable
 result list and deep links into the booking site.
 
@@ -163,6 +163,54 @@ them in `cache/geo.json`. All 37 parks resolve; 36 land on the park itself,
 and "Algonquin Backcountry" falls back to Whitney (it is a whole region, not
 a point). Kiosk Campground needed a manual coordinate. That script is
 rate-limited to Nominatim's 1 request/second and only needs to run once.
+
+---
+
+## 2c. Deploying to Vercel
+
+The repo is Vercel-ready. Connect it once in the dashboard and every push to
+`main` deploys itself.
+
+1. Vercel dashboard → **Add New… → Project** → import
+   `haseebj123/ontario-parks-roofed-finder`.
+2. Framework preset **Other**. Leave build/output settings empty; `vercel.json`
+   already describes everything.
+3. Deploy.
+4. **Settings → Deployment Protection → enable Vercel Authentication.**
+   Do this. See the warning below.
+
+No environment variables are required. Two optional ones:
+`SCAN_TTL_SECONDS` (default 900) and `SCAN_DAYS` (default 210).
+
+### How it works when deployed
+
+Serverless has no persistent disk, so the data model changes:
+
+| | Local | Vercel |
+|---|---|---|
+| Park inventory, coordinates | `cache/*.json` | same files, bundled via `includeFiles` |
+| Availability | `cache/availability.json` on disk | fetched live, cached in memory + at the CDN |
+
+`api/index.py` is a single function serving every `/api/*` route
+(`vercel.json` rewrites `/api/:action` to `/api/index?action=:action`). A cold
+start scans Ontario Parks live, which takes about 5 seconds; warm requests
+answer in ~0.2s. Responses carry `s-maxage=900, stale-while-revalidate=1800`,
+so Vercel's edge absorbs repeat traffic and our polling of Ontario Parks stays
+roughly constant no matter how many people load the page. An hourly cron keeps
+a warm instance around.
+
+Filtering deliberately stays in Python rather than moving to the browser. The
+minimum-stay rules are subtle enough that maintaining them in two languages
+would invite exactly the bug documented in section 3.
+
+### Before you make it public
+
+The GitHub repo being public is fine; sharing the code costs Ontario Parks
+nothing. **An unprotected deployment is a different thing.** It is a public
+endpoint that scans a government booking system, and every visitor, crawler
+and bot multiplies that load. Turn on Vercel Authentication so only your
+account can open it. It takes one click and keeps this a personal tool rather
+than a service you are unintentionally operating.
 
 ---
 
@@ -365,7 +413,9 @@ these endpoints end up behind the same WAF the `.com` host already uses:
 | `op_roofed.py` | CLI: refresh / scan / search / watch |
 | `geocode.py` | one-time park geocoding via OSM Nominatim |
 | `server.py` | local web app (map + search) |
-| `web/` | front end: `index.html`, `app.js`, `style.css` |
+| `public/` | front end: `index.html`, `app.js`, `style.css` |
+| `api/index.py` | Vercel serverless entry point |
+| `vercel.json` | deployment config (routes, cron, bundled files) |
 | `cache/inventory.json` | 37 parks, 196 units (from `refresh`) |
 | `cache/availability.json` | last scan (from `scan`) |
 | `cache/geo.json` | park coordinates (from `geocode.py`) |

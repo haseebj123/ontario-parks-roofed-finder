@@ -168,7 +168,12 @@ function renderList(payload) {
 async function openPark(id) {
   const p = filters();
   p.set("id", id);
-  const data = await fetch("/api/park?" + p.toString()).then((r) => r.json());
+  let data;
+  try {
+    data = await api("/api/park", p);
+  } catch (err) {
+    return toast("Could not load park: " + err.message, 4000);
+  }
   if (data.error) return toast(data.error);
 
   const start = new Date(data.gridStart + "T00:00:00");
@@ -245,20 +250,48 @@ async function openPark(id) {
 
 /* ---------------- plumbing ---------------- */
 
+/* When deployed, /api/search sits behind Vercel's CDN. After a Rescan we
+   need a different URL or the edge keeps serving the pre-scan results. */
+let cacheBust = "";
+
+function api(path, params) {
+  const p = params || new URLSearchParams();
+  if (cacheBust) p.set("_", cacheBust);
+  return fetch(path + "?" + p.toString()).then((r) => {
+    if (!r.ok) throw new Error(`${path} returned ${r.status}`);
+    return r.json();
+  });
+}
+
 let timer = null;
+let firstLoad = true;
 function refresh(debounce = 0) {
   clearTimeout(timer);
   timer = setTimeout(async () => {
     guardTypes();
-    const payload = await fetch("/api/search?" + filters().toString())
-      .then((r) => r.json());
-    if (payload.error) return toast(payload.error);
-    lastPayload = payload;
-    $("#scanmeta").textContent =
-      `scan ${payload.scannedAt.replace("T", " ")} · ` +
-      `${payload.start} → ${payload.end}`;
-    drawMarkers(payload.parks);
-    renderList(payload);
+    if (firstLoad) {
+      // A cold serverless start scans Ontario Parks live, which takes a few
+      // seconds. Say so rather than showing an empty page.
+      $("#results").innerHTML =
+        `<div class="empty">Scanning Ontario Parks for live availability…<br>` +
+        `<small>First load can take a few seconds.</small></div>`;
+    }
+    try {
+      const payload = await api("/api/search", filters());
+      if (payload.error) return toast(payload.error);
+      lastPayload = payload;
+      firstLoad = false;
+      $("#scanmeta").textContent =
+        `scan ${payload.scannedAt.replace("T", " ")} · ` +
+        `${payload.start} → ${payload.end}`;
+      drawMarkers(payload.parks);
+      renderList(payload);
+    } catch (err) {
+      $("#results").innerHTML =
+        `<div class="empty">Could not load availability.<br>` +
+        `<small>${esc(err.message)}</small></div>`;
+      toast("Request failed: " + err.message, 4000);
+    }
   }, debounce);
 }
 
@@ -290,7 +323,10 @@ function wire() {
     const b = $("#rescan");
     b.disabled = true; b.textContent = "Scanning…";
     try {
-      const r = await fetch("/api/scan", { method: "POST" }).then((x) => x.json());
+      const r = await fetch("/api/scan?_=" + Date.now(), { method: "POST" })
+        .then((x) => x.json());
+      // Change the search URL so the CDN cannot serve pre-scan results.
+      cacheBust = String(Date.now());
       toast(r.error ? r.error : "Fresh data pulled from Ontario Parks");
       refresh();
     } catch (err) {
